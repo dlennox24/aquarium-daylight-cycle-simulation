@@ -1,0 +1,38 @@
+{
+  "name": "aquarium-daylight-cycle-simulation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "pretest": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./dist/index.js",
+    "tar": "tar --exclude='dist.tar.gz' -czvf ./dist/dist.tar.gz ./dist/* ./package.json ./package-lock.json",
+    "tar-src": "tar --exclude='dist.tar.gz' --exclude='src.tar.gz' --exclude='node_modules' -czvf ./src.tar.gz ./*",
+    "untar": "tar -xzvf dist.tar.gz",
+    "scp": "scp ./dist/dist.tar.gz root@10.0.0.160:/root/apps/daylight-sim/dist.tar.gz",
+    "ssh": "ssh root@10.0.0.160",
+    "predeploy": "npm run build && npm run tar",
+    "deploy": "npm run scp"
+  },
+  "author": "dlennox24",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "core-js": "^3.8.1",
+    "lodash": "^4.17.20",
+    "luxon": "^1.25.0",
+    "minimist": "^1.2.5",
+    "onoff": "^6.0.1",
+    "regenerator-runtime": "^0.13.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/preset-env": "^7.12.11",
+    "@rollup/plugin-babel": "^5.2.2",
+    "rollup": "^2.35.1"
+  }
+}
