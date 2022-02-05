@@ -82,6 +82,18 @@ program
   });
 
 program
+  .command('calibrate')
+  .description(
+    'Initial calibration of light positioning and stepper motor steps per millimeter.'
+  )
+  .option(...optionTypes.configPath)
+  .option(...optionTypes.noExecPython)
+  .action((options, program) => {
+    command = program.name();
+    argv = options;
+  });
+
+program
   .command('build-config')
   .description('Builds the initial config file based of a JSON input file.')
   .option(...optionTypes.configPath)
@@ -103,6 +115,7 @@ let config = {};
 switch (command) {
   case 'move':
   case 'exec-phase':
+    // case 'calibrate':
     const { configPath, execPython } = argv;
 
     log.title(`Reading Config File`);
@@ -150,7 +163,22 @@ switch (command) {
     break;
   case 'exec-phase':
     log.title('Starting Phase Move');
-    log.object(argv);
+    const phase = config.phases[argv.phase];
+    steppers.forEach((stepperMotor) => {
+      const phaseDist = Math.abs(
+        stepperMotor.coords[phase.endPos] - stepperMotor.coords[phase.beginPos]
+      );
+      const steps = stepperMotor.stepsPerMm * phaseDist;
+      const stepperDelay_ms = phase.total_ms / steps;
+      try {
+        stepperMotor.move(phase.beginPos, phase.endPos, stepperDelay_ms);
+      } catch (error) {
+        log.error(`Failed to move ${stepperMotor.motorId}:\n     ${error}`);
+      }
+    });
+    break;
+  case 'calibrate':
+    log.error('Not implemented yet');
     break;
 
   default:

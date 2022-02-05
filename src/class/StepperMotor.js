@@ -41,7 +41,7 @@ class StepperMotor {
         tag: this.id,
       }
     );
-    log.text(`delay: ${pyConfig.delay} ms`, { tag: this.id });
+    log.text(`delay: ${pyConfig.stepperDelay_ms} ms`, { tag: this.id });
     log.text(`pins: ${JSON.stringify(this.gpioPins)}`, { tag: this.id });
     log.text(JSON.stringify(pyConfig), { tag: this.id });
 

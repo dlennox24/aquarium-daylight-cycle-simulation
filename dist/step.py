@@ -71,7 +71,7 @@ def move():
   currStepPerc = 0
   for step in range(totalSteps):
     nextStepPerc = round(step / totalSteps * 100)
-    if nextStepPerc % 10 == 0 and nextStepPerc != currStepPerc:
+    if nextStepPerc % 2 == 0 and nextStepPerc != currStepPerc:
       print(str(nextStepPerc) + '% (' + str(step) + '/' + str(totalSteps) + ')', end='')
       currStepPerc = nextStepPerc
     GPIO.output(config['gpioPins']['motor'], GPIO.HIGH)
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     move()
     destroy()
     endTimeVar = datetime.datetime.now()
-    print("Args Time: ", (endTimeVar-startTimeVar).total_seconds() * 1000)
+    print("Args Time: ", round((endTimeVar-startTimeVar).total_seconds()), "s")
     # print("Total Steps: ", stepsCount)
   except KeyboardInterrupt:
     destroy()
