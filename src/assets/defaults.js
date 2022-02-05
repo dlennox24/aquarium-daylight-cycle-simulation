@@ -1,8 +1,9 @@
 export default {
   gearDriver: {
     totalLength_mm: 1820,
-    stepsPerMm: [4.25, 4.25, 4.25, 4.25],
-    stepperResolution: 32,
+    stepsPerMm: [160, 160, 160, 160], // 5 steps/mm * 32 microsteps
+    microsteps: 32,
+    minDelay: 0.00625, // 1/160 ms
     gpioPins: {
       motors: [1, 2, 3, 4],
       switches: [5, 6, 7, 8],
@@ -24,6 +25,10 @@ export default {
     moonrise: {
       start: '18:00',
       end: '20:00',
+    },
+    moonset: {
+      start: '00:00',
+      end: '01:00',
     },
   },
   lightSpecs: {

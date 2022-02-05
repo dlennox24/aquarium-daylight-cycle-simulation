@@ -1,12 +1,12 @@
 import fs from 'fs';
 import _ from 'lodash';
-import defaultData from '../assets/defaults';
-import log from './log';
-import { roundFloat, timeDiff_ms } from './utils';
+import defaultData from '../../assets/defaults';
+import log from '../../utils/log';
+import { roundFloat, timeDiff_ms } from '../../utils/utils';
 const { resolve } = require('path');
 
 const createTimesObj = (times) => {
-  const { sunrise, sunset, moonrise } = times;
+  const { sunrise, sunset, moonrise, moonset } = times;
   times = {
     ...times,
     sunrise: {
@@ -26,6 +26,15 @@ const createTimesObj = (times) => {
       ...moonrise,
       total_ms: timeDiff_ms(moonrise.start, moonrise.end),
     },
+    moon: {
+      start: moonrise.end,
+      end: moonset.start,
+      total_ms: timeDiff_ms(moonrise.end, moonset.start),
+    },
+    moonset: {
+      ...moonset,
+      total_ms: timeDiff_ms(moonset.start, moonset.end),
+    },
   };
 
   return times;
@@ -40,17 +49,26 @@ const createMotorsArray = (config) => {
   let motors = {};
   for (let i = 1; i <= count; i++) {
     const id = `motor_${i}`;
+
+    const lightCoords = {
+      left: roundFloat((width_mm + gap_mm) * i - (width_mm + gap_mm) / 2),
+      center: roundFloat(spacing_mm * i),
+      right: roundFloat(
+        totalLength_mm -
+          (width_mm + gap_mm) * (count + 1 - i) +
+          (width_mm + gap_mm) / 2
+      ),
+    };
+
     let motor = {
       id,
       coords: {
-        sunrise: roundFloat((width_mm + gap_mm) * i - (width_mm + gap_mm) / 2),
-        noon: roundFloat(spacing_mm * i),
-        sunset: roundFloat(
-          totalLength_mm -
-            (width_mm + gap_mm) * (count + 1 - i) +
-            (width_mm + gap_mm) / 2
-        ),
-        moon: roundFloat(spacing_mm * i),
+        sunrise: lightCoords.left,
+        noon: lightCoords.center,
+        sunset: lightCoords.right,
+        moonrise: lightCoords.right,
+        moon: lightCoords.center,
+        moonset: lightCoords.left,
       },
       stepsPerMm: stepsPerMm[i - 1],
     };
@@ -68,9 +86,9 @@ const createMotorsArray = (config) => {
   return motors;
 };
 
-const readConfigInputs = (configInputsPath) => {
+const readInputs = (inputsPath) => {
   try {
-    return JSON.parse(fs.readFileSync(configInputsPath));
+    return JSON.parse(fs.readFileSync(inputsPath));
   } catch (err) {
     log.error(err);
     return {};
@@ -88,18 +106,18 @@ const exportConfig = (data, path) => {
   }
 };
 
-const buildConfig = ({ configPath, configInputsPath }) => {
+const buildConfig = ({ configPath, inputsPath }) => {
   let inputData = {};
   try {
     log.title('Building Config Files');
     log.text(`config path: ${resolve(configPath)}`);
 
-    if (!fs.existsSync(configInputsPath)) {
-      log.warn(`no config inputs path found: ${resolve(configInputsPath)}`);
+    if (!fs.existsSync(inputsPath)) {
+      log.warn(`no config inputs path found: ${resolve(inputsPath)}`);
       log.text(`using default config inputs`);
     } else {
-      log.text(`config inputs path: ${resolve(configInputsPath)}`);
-      inputData = readConfigInputs(configInputsPath);
+      log.text(`config inputs path: ${resolve(inputsPath)}`);
+      inputData = readInputs(inputsPath);
     }
 
     let config = _.defaultsDeep({}, inputData, defaultData);

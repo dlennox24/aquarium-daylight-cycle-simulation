@@ -1,7 +1,7 @@
 {
   "name": "aquarium-daylight-cycle-simulation",
   "version": "1.0.0",
-  "description": "",
+  "description": "A configurable daylight cycle simulation that can simulate sunrise, midday, sunset, moonrise, moon peak, and moonset.",
   "main": "dist/index.js",
   "scripts": {
     "build": "rollup -c",
@@ -9,18 +9,20 @@
     "pretest": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./dist/index.js",
-    "tar": "tar --exclude='dist.tar.gz' -czvf ./dist/dist.tar.gz ./dist/* ./package.json ./package-lock.json",
+    "tar": "tar --exclude='dist.tar.gz' -czvf ./dist/dist.tar.gz ./dist/* ./inputs.json ./package.json ./package-lock.json",
     "tar-src": "tar --exclude='dist.tar.gz' --exclude='src.tar.gz' --exclude='node_modules' -czvf ./src.tar.gz ./*",
     "untar": "tar -xzvf dist.tar.gz",
     "scp": "scp ./dist/dist.tar.gz root@192.168.1.137:~/dev/aquarium-daylight-cycle-simulation/dist.tar.gz",
-    "ssh": "ssh root@10.0.0.160",
+    "ssh": "ssh root@192.168.1.137",
     "predeploy": "npm run build && npm run tar",
     "deploy": "npm run scp"
   },
   "author": "dlennox24",
   "license": "MIT",
   "dependencies": {
+    "@rollup/plugin-json": "^4.1.0",
     "chalk": "^2.4.2",
+    "commander": "^9.0.0",
     "core-js": "^3.8.1",
     "lodash": "^4.17.20",
     "luxon": "^1.25.0",

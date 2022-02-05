@@ -1,16 +1,19 @@
 import { spawn } from 'child_process';
-import fs from 'fs';
 import path from 'path';
 import log from '../utils/log';
 import { roundFloat, roundInt } from '../utils/utils';
 
 class StepperMotor {
-  constructor(motor) {
+  constructor(motor, execPython = false) {
     this.id = motor.id;
     this.coords = motor.coords;
     this.gpioPins = motor.gpioPins;
     this.stepsPerMm = motor.stepsPerMm;
+    this.microsteps = motor.microsteps;
+    this.minDelay = motor.minDelay;
     this.pythonProcess = null;
+
+    this.execPython = execPython;
   }
 
   move(from, to, time_ms) {
@@ -21,7 +24,7 @@ class StepperMotor {
       dist_mm: this.coords[to] - this.coords[from],
     };
     pyConfig.steps = roundInt(this.stepsPerMm * pyConfig.dist_mm);
-    pyConfig.delay = roundFloat(time_ms / pyConfig.steps);
+    pyConfig.delay = roundFloat(time_ms, 15);
     pyConfig.pins = Object.keys(this.gpioPins).map(
       (pinKey) => this.gpioPins[pinKey]
     );
@@ -43,26 +46,28 @@ class StepperMotor {
     log.text(`pins: ${JSON.stringify(this.gpioPins)}`, { tag: this.id });
     log.text(JSON.stringify(pyConfig), { tag: this.id });
 
-    this.pythonProcess = spawn('python3', [
-      '-u',
-      path.join(__dirname, 'step.py'),
-      '--configString',
-      JSON.stringify(pyConfig),
-    ]);
+    if (this.execPython) {
+      this.pythonProcess = spawn('python3', [
+        '-u',
+        path.join(__dirname, 'step.py'),
+        '--configString',
+        JSON.stringify(pyConfig),
+      ]);
 
-    this.pythonProcess.stdout.on('data', (data) => {
-      log.text(data, { tag: this.id });
-    });
-    this.pythonProcess.stderr.on('data', (data) => {
-      log.error(data, { tag: this.id });
-    });
-    this.pythonProcess.stderr.on('close', () => {
-      log.text('closed', { tag: this.id });
-    });
+      this.pythonProcess.stdout.on('data', (data) => {
+        log.text(data, { tag: this.id });
+      });
+      this.pythonProcess.stderr.on('data', (data) => {
+        log.error(data, { tag: this.id });
+      });
+      this.pythonProcess.stderr.on('close', () => {
+        log.text('closed', { tag: this.id });
+      });
+    }
   }
 
   destroy() {
-    if (this.pythonProcess) {
+    if (this.pythonProcess && !this.execPython) {
       this.pythonProcess.kill('SIGINT');
     }
     console.log('...done');

@@ -65,12 +65,15 @@ def parseArgs(argv):
 
 def move():
   global config, stepResolution
-  totalSteps = abs(config['steps'])*stepResolution
-  totalDelay = abs(config['delay']) * 0.001 / stepResolution
+  totalSteps = abs(config['steps'])
+  totalDelay = abs(config['delay']) * 0.001 / stepResolution # *0.001 to convert to sec from ms
 
+  currStepPerc = 0
   for step in range(totalSteps):
-    if (step / totalSteps * 100) % 10 == 0:
-      print(str(step / totalSteps * 100) + '%')
+    nextStepPerc = round(step / totalSteps * 100)
+    if nextStepPerc % 10 == 0 and nextStepPerc != currStepPerc:
+      print(str(nextStepPerc) + '% (' + str(step) + '/' + str(totalSteps) + ')', end='')
+      currStepPerc = nextStepPerc
     GPIO.output(config['gpioPins']['motor'], GPIO.HIGH)
     sleep(totalDelay / 2)
     GPIO.output(config['gpioPins']['motor'], GPIO.LOW)

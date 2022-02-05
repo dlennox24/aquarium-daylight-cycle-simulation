@@ -1,85 +1,93 @@
 import 'core-js/stable';
-import fs from 'fs';
 import 'regenerator-runtime/runtime';
-import StepperMotor from './class/StepperMotor';
-import buildConfig from './utils/buildConfig';
+import pkg from '../package.json';
+import buildConfig from './commands/build-config/build-config';
+import move from './commands/move/move';
 import log from './utils/log';
+
 const { resolve } = require('path');
-var argv = require('minimist')(process.argv.slice(2));
-const {
-  configPath = './config.json',
-  configInputsPath = './inputs.json',
-  from,
-  to,
-  rebuild = false,
-  noPy = false, // doesn't fire python motor scripts
-} = argv;
 
-const start = () => {
-  log.title('Starting Python Execution');
+const { Command, InvalidArgumentError } = require('commander');
+const program = new Command();
 
-  try {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    log.success(`config found! ${resolve(configPath)}`);
-    log.text(`config build: ${new Date(config.buildDate).toGMTString()}`);
+let command = '';
+let argv = {};
 
-    const steppers = Object.keys(config.motors).map((motorId, i) => {
-      const motor = config.motors[motorId];
+const configPathOptions = [
+  '--config-path <pathToFile>',
+  'Path to the config file',
+  resolve('./config.json'),
+];
 
-      try {
-        let time_ms = 5 * 60 * 1000;
-        if (from === 'sunrise' && to === 'noon') {
-          time_ms = config.times.sunrise.total_ms;
-        }
-        if (from === 'noon' && to === 'sunset') {
-          time_ms = config.times.sunset.total_ms;
-        }
-
-        log.text(`creating ${motorId}`, { tag: motorId });
-        const stepperMotor = new StepperMotor(motor);
-        log.success(`created motor!`, { tag: motorId });
-
-        if (!noPy) {
-          stepperMotor.move(from, to, time_ms);
-        }
-
-        return stepperMotor;
-      } catch (error) {
-        log.error(`Failed to start ${motorId}:\n     ${error}`);
-      }
-    });
-
-    process.on('SIGINT', () => {
-      steppers.forEach((stepperMotor) => {
-        stepperMotor.destroy();
-      });
-    });
-  } catch (err) {
-    log.error(err);
+const validPositions = [
+  'sunrise',
+  'noon',
+  'sunset',
+  'moonrise',
+  'moon',
+  'moonset',
+];
+function isValidPositionType(value) {
+  if (!validPositions.includes(value)) {
+    log.error(`Invalid position: ${value}`);
+    throw new InvalidArgumentError(
+      `Position must be one of [${validPositions}].`
+    );
   }
-};
-
-log.title('Starting Sunrise/set Sim');
-log.text(`route: ${from} → ${to}`);
-
-if (rebuild || !fs.existsSync(configPath)) {
-  if (!fs.existsSync(configPath)) {
-    log.warn(`no config file found: ${resolve(configPath)}`);
-  }
-  buildConfig({ configPath, configInputsPath });
+  return value;
 }
 
-if (to && from) {
-  start();
-} else {
-  if (!to) {
-    log.error(
-      `invalid \`to\` arg: \'${to}\'. must be one of [sunrise, noon, sunset, moon]`
-    );
-  }
-  if (!from) {
-    log.error(
-      `invalid \`from\` arg: \'${from}\'. must be one of [sunrise, noon, sunset, moon]`
-    );
-  }
+program.name(pkg.name).description(pkg.description).version(pkg.version);
+
+program
+  .command('move')
+  .description(
+    'Initiate move of the light(s) from one position to another. ' +
+      `Position must be one of [${validPositions}].`
+  )
+  .argument('<from>', 'Starting position of the light(s)', isValidPositionType)
+  .argument('<to>', 'Ending position of hte light(s)', isValidPositionType)
+  .option(...configPathOptions)
+  .option(
+    '--no-exec-python',
+    `Don't execute python scripts. Used for testing Node.js scripts`
+  )
+  .action((from, to, options, program) => {
+    command = program.name();
+    argv = {
+      from,
+      to,
+      ...options,
+    };
+  });
+
+program
+  .command('build-config')
+  .description('Builds the initial config file based of a JSON input file.')
+  .option(...configPathOptions)
+  .option(
+    '-i, --inputs-path <string>',
+    'Path to the inputs file',
+    resolve('./inputs.json')
+  )
+  .action((options, program) => {
+    command = program.name();
+    argv = options;
+  });
+
+program.parse();
+
+switch (command) {
+  case 'build-config':
+    log.text('config');
+    buildConfig(argv);
+    break;
+  case 'move':
+    log.text('move');
+    move(argv);
+    break;
+
+  default:
+    log.error(`Unknown command: ${command}`);
+    break;
 }
