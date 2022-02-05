@@ -6,7 +6,14 @@ import buildConfig from './utils/buildConfig';
 import log from './utils/log';
 const { resolve } = require('path');
 var argv = require('minimist')(process.argv.slice(2));
-const { configPath = './config.json', from, to, rebuild = false } = argv;
+const {
+  configPath = './config.json',
+  configInputsPath = './inputs.json',
+  from,
+  to,
+  rebuild = false,
+  noPy = false, // doesn't fire python motor scripts
+} = argv;
 
 const start = () => {
   log.title('Starting Python Execution');
@@ -16,8 +23,8 @@ const start = () => {
     log.success(`config found! ${resolve(configPath)}`);
     log.text(`config build: ${new Date(config.buildDate).toGMTString()}`);
 
-    const steppers = config.motors.map((motor, i) => {
-      const { id, gpioPins } = motor;
+    const steppers = Object.keys(config.motors).map((motorId, i) => {
+      const motor = config.motors[motorId];
 
       try {
         let time_ms = 5 * 60 * 1000;
@@ -28,24 +35,19 @@ const start = () => {
           time_ms = config.times.sunset.total_ms;
         }
 
-        log.text(`creating ${id}`, { tag: id });
+        log.text(`creating ${motorId}`, { tag: motorId });
         const stepperMotor = new StepperMotor(motor);
-        log.success(`created motor!`, { tag: id });
-        stepperMotor.move(from, to, time_ms);
+        log.success(`created motor!`, { tag: motorId });
+
+        if (!noPy) {
+          stepperMotor.move(from, to, time_ms);
+        }
+
         return stepperMotor;
       } catch (error) {
-        log.error(`Failed to start ${id}:\n     ${error}`);
+        log.error(`Failed to start ${motorId}:\n     ${error}`);
       }
-      //   stepperMotor.doFullSteps({
-      //     steps: motor.sunrise.steps,
-      //     delay: motor.sunrise.delay,
-      //   });
-      //   stepperMotor.destroy();
     });
-
-    // // const m1 = new StepperMotor(config.motors[0]);
-    // // m1.doFullSteps({ steps: 1024, delay: 500 });
-    // // m1.destroy();
 
     process.on('SIGINT', () => {
       steppers.forEach((stepperMotor) => {
@@ -64,7 +66,7 @@ if (rebuild || !fs.existsSync(configPath)) {
   if (!fs.existsSync(configPath)) {
     log.warn(`no config file found: ${resolve(configPath)}`);
   }
-  buildConfig({ configPath });
+  buildConfig({ configPath, configInputsPath });
 }
 
 if (to && from) {

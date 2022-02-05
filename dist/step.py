@@ -1,63 +1,82 @@
-import sys, getopt
-import RPi.GPIO as GPIO
-import time 
 import datetime
+import getopt
+import json
+import sys
+from time import sleep
 
-steps = 0
-pins = []
-delay = 2
-stepOrder = []
+import RPi.GPIO as GPIO
+
+configString = ""
+config = {}
+stepResolution = 32
 
 def setup():
-  global pins
+  global configString, config
 
   print ('Program is starting...')
+
+  config = json.loads(configString)
+  # print(config)
   GPIO.setmode(GPIO.BCM)
-  for pin in pins:
+  for pin in config['pins']:
     GPIO.setup(pin,GPIO.OUT)
+  GPIO.output(config['gpioPins']['direction'], 1 if config['steps'] > 0 else 0)
+  #end for
 
-def doFullSteps():
-  global steps, pins, delay, stepOrder
-
-  for i in range(steps):
-    microstep = list(stepOrder[i%4])
-    for j in range(4):
-      GPIO.output(pins[j], int(microstep[j]))
-      j=1+1
-    
-    print(i)
-    time.sleep(delay*0.001)
+  # TODO remove
+  # TEMP microstepping setup
+  MODE = (14, 15, 18)
+  GPIO.setup(MODE, GPIO.OUT)
+  RESOLUTION = {
+              '1': (0, 0, 0),
+              '2': (1, 0, 0),
+              '4': (0, 1, 0),
+              '8': (1, 1, 0),
+              '16': (0, 0, 1),
+              '32': (1, 0, 1)
+              }
+  GPIO.output(MODE, RESOLUTION[str(stepResolution)])
+#end setup()
 
 def destroy():
   GPIO.cleanup()
   print('Program exited...')
+#end destroy()
 
 def parseArgs(argv):
-  global steps, pins, delay, stepOrder
+  global configString
 
   try:
-     opts, args = getopt.getopt(argv,"hd:p:s:o:",["delay=","pins=","steps=", "steporder="])
+     opts, args = getopt.getopt(argv,"hc:i:",["configString="])
   except getopt.GetoptError:
-    print('step.py -d <delay> -p <pinsCsv> -s <steps> -o <stepOrder(csv)>')
+    print('step.py -c <configString>')
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
-      print('step.py -d <delay> -p <pinsCsv> -s <steps> -o <stepOrder(csv)>')
+      print('step.py -c <configString>')
       sys.exit()
-    elif opt in ("-d", "--delay"):
-      delay = float(arg)
-    elif opt in ("-p", "--pins"):
-      pins = [int(i) for i in arg.split(',')]
-    elif opt in ("-o", "--steporder"):
-      stepOrder = arg.split(',')
-    elif opt in ("-s", "--steps"):
-      steps = int(arg)
+    elif opt in ("-c", "--configString"):
+      configString = arg
+  #end for
   
-  print('ARGV       :',argv)
-  print('DELAY      :', delay)
-  print('PINS       :', pins)
-  print('STEPS      :', steps)
-  print('STEPORDER  :', stepOrder)
+  print('argv          :', argv)
+  print('configString  :', configString)
+#end parseArgs()
+
+def move():
+  global config, stepResolution
+  totalSteps = abs(config['steps'])*stepResolution
+  totalDelay = abs(config['delay']) * 0.001 / stepResolution
+
+  for step in range(totalSteps):
+    if (step / totalSteps * 100) % 10 == 0:
+      print(str(step / totalSteps * 100) + '%')
+    GPIO.output(config['gpioPins']['motor'], GPIO.HIGH)
+    sleep(totalDelay / 2)
+    GPIO.output(config['gpioPins']['motor'], GPIO.LOW)
+    sleep(totalDelay / 2)
+  #end for
+#end move()
 
 if __name__ == '__main__':
   print('==================')
@@ -65,11 +84,12 @@ if __name__ == '__main__':
   print('==================')
   setup()
   try:
-    # startTimeVar = datetime.datetime.now()
-    doFullSteps()
+    startTimeVar = datetime.datetime.now()
+    move()
     destroy()
-    # endTimeVar = datetime.datetime.now()
-    # print("Args Time: ", (endTimeVar-startTimeVar).total_seconds() * 1000)
+    endTimeVar = datetime.datetime.now()
+    print("Args Time: ", (endTimeVar-startTimeVar).total_seconds() * 1000)
     # print("Total Steps: ", stepsCount)
   except KeyboardInterrupt:
     destroy()
+#end if

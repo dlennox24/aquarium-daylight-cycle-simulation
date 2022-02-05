@@ -1,7 +1,8 @@
 export default {
   gearDriver: {
     totalLength_mm: 1820,
-    stepsPerMm: [25, 21, 23, 26],
+    stepsPerMm: [4.25, 4.25, 4.25, 4.25],
+    stepperResolution: 32,
     gpioPins: {
       motors: [1, 2, 3, 4],
       switches: [5, 6, 7, 8],
@@ -30,5 +31,5 @@ export default {
     width_mm: 127,
     gap_mm: 5,
   },
-  motors: [],
+  motors: {},
 };

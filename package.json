@@ -12,7 +12,7 @@
     "tar": "tar --exclude='dist.tar.gz' -czvf ./dist/dist.tar.gz ./dist/* ./package.json ./package-lock.json",
     "tar-src": "tar --exclude='dist.tar.gz' --exclude='src.tar.gz' --exclude='node_modules' -czvf ./src.tar.gz ./*",
     "untar": "tar -xzvf dist.tar.gz",
-    "scp": "scp ./dist/dist.tar.gz root@10.0.0.160:/root/apps/daylight-sim/dist.tar.gz",
+    "scp": "scp ./dist/dist.tar.gz root@192.168.1.137:~/dev/aquarium-daylight-cycle-simulation/dist.tar.gz",
     "ssh": "ssh root@10.0.0.160",
     "predeploy": "npm run build && npm run tar",
     "deploy": "npm run scp"

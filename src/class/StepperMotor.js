@@ -10,49 +10,44 @@ class StepperMotor {
     this.coords = motor.coords;
     this.gpioPins = motor.gpioPins;
     this.stepsPerMm = motor.stepsPerMm;
-
-    this.stepCount = 0;
     this.pythonProcess = null;
   }
 
   move(from, to, time_ms) {
     log.text(`move: ${from} → ${to}`, { tag: this.id });
-    const dist_mm = this.coords[to] - this.coords[from];
-    const steps = roundInt(this.stepsPerMm * dist_mm);
-    const delay = roundFloat(time_ms / steps);
+    const pyConfig = {
+      ...this,
+      time_ms,
+      dist_mm: this.coords[to] - this.coords[from],
+    };
+    pyConfig.steps = roundInt(this.stepsPerMm * pyConfig.dist_mm);
+    pyConfig.delay = roundFloat(time_ms / pyConfig.steps);
+    pyConfig.pins = Object.keys(this.gpioPins).map(
+      (pinKey) => this.gpioPins[pinKey]
+    );
+    delete pyConfig.pythonProcess;
+
     log.text(
-      `coords: ${this.coords[from]} → ${this.coords[to]} (${dist_mm}mm)`,
+      `coords: ${this.coords[from]} → ${this.coords[to]} (${pyConfig.dist_mm}mm)`,
       {
         tag: this.id,
       }
     );
-    log.text(`steps: ${steps} (${dist_mm} mm * ${this.stepsPerMm} s/mm)`, {
-      tag: this.id,
-    });
-    log.text(`delay: ${delay}`, { tag: this.id });
-  }
-
-  doFullSteps(args) {
-    let { isReversed, delay, steps } = args;
-    delay = delay >= 2 ? delay : 2;
-    steps = steps >= 1 ? steps : 1;
-
-    let stepOrder = ['1100', '0110', '0011', '1001'];
-    if (isReversed) {
-      stepOrder.reverse();
-    }
+    log.text(
+      `steps: ${pyConfig.steps} (${pyConfig.dist_mm} mm * ${this.stepsPerMm} s/mm)`,
+      {
+        tag: this.id,
+      }
+    );
+    log.text(`delay: ${pyConfig.delay} ms`, { tag: this.id });
+    log.text(`pins: ${JSON.stringify(this.gpioPins)}`, { tag: this.id });
+    log.text(JSON.stringify(pyConfig), { tag: this.id });
 
     this.pythonProcess = spawn('python3', [
       '-u',
       path.join(__dirname, 'step.py'),
-      '-d',
-      delay,
-      '-p',
-      this.gpioPins.toString(),
-      '-s',
-      steps,
-      '-o',
-      stepOrder.toString(),
+      '--configString',
+      JSON.stringify(pyConfig),
     ]);
 
     this.pythonProcess.stdout.on('data', (data) => {
@@ -64,33 +59,14 @@ class StepperMotor {
     this.pythonProcess.stderr.on('close', () => {
       log.text('closed', { tag: this.id });
     });
-
-    return this.pythonProcess;
-  }
-
-  resetStepCount() {
-    this.stepCount = 0;
   }
 
   destroy() {
+    if (this.pythonProcess) {
+      this.pythonProcess.kill('SIGINT');
+    }
     console.log('...done');
   }
 }
-
-export const testStepperMotor = () => {
-  try {
-    const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
-
-    const m1 = new StepperMotor(config.motors[0]);
-    m1.doFullSteps({ steps: 1024, delay: 500 });
-    m1.destroy();
-
-    process.on('SIGINT', () => {
-      m1.destroy();
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
 
 export default StepperMotor;
