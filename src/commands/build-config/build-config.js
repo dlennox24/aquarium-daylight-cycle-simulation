@@ -5,10 +5,17 @@ import log from '../../utils/log';
 import { roundFloat, timeDiff_ms } from '../../utils/utils';
 const { resolve } = require('path');
 
-const createTimesObj = (times) => {
-  const { sunrise, sunset, moonrise, moonset } = times;
-  times = {
-    ...times,
+const createPhasesObj = (phases) => {
+  // const { sunrise, sunset, moonrise, moonset } = phases;
+  Object.keys(phases).forEach((phase) => {
+    phases[phase] = {
+      ...phases[phase],
+      total_ms: timeDiff_ms(phases[phase].start, phases[phase].end),
+    };
+  });
+  return phases;
+  phases = {
+    ...phases,
     sunrise: {
       ...sunrise,
       total_ms: timeDiff_ms(sunrise.start, sunrise.end),
@@ -37,7 +44,7 @@ const createTimesObj = (times) => {
     },
   };
 
-  return times;
+  return phases;
 };
 
 const createMotorsArray = (config) => {
@@ -151,7 +158,7 @@ const buildConfig = ({ configPath, inputsPath }) => {
     }
 
     config.motors = createMotorsArray(config);
-    config.times = createTimesObj(config.times);
+    config.phases = createPhasesObj(config.phases);
     config.buildDate = new Date();
 
     log.text(`generating config file`);

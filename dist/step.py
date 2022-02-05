@@ -66,7 +66,7 @@ def parseArgs(argv):
 def move():
   global config, stepResolution
   totalSteps = abs(config['steps'])
-  totalDelay = abs(config['delay']) * 0.001 / stepResolution # *0.001 to convert to sec from ms
+  totalDelay = abs(config['stepperDelay_ms']) * 0.001 # *0.001 to convert to sec from ms
 
   currStepPerc = 0
   for step in range(totalSteps):

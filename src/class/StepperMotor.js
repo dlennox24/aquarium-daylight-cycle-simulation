@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import log from '../utils/log';
-import { roundFloat, roundInt } from '../utils/utils';
+import { roundInt } from '../utils/utils';
 
 class StepperMotor {
   constructor(motor, execPython = false) {
@@ -16,15 +16,14 @@ class StepperMotor {
     this.execPython = execPython;
   }
 
-  move(from, to, time_ms) {
+  move(from, to, stepperDelay_ms) {
     log.text(`move: ${from} → ${to}`, { tag: this.id });
     const pyConfig = {
       ...this,
-      time_ms,
+      stepperDelay_ms,
       dist_mm: this.coords[to] - this.coords[from],
     };
     pyConfig.steps = roundInt(this.stepsPerMm * pyConfig.dist_mm);
-    pyConfig.delay = roundFloat(time_ms, 15);
     pyConfig.pins = Object.keys(this.gpioPins).map(
       (pinKey) => this.gpioPins[pinKey]
     );

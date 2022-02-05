@@ -13,20 +13,40 @@ export default {
       enable: 11,
     },
   },
-  times: {
+  phases: {
     sunrise: {
+      beginPos: 'sunrise',
+      endPos: 'noon',
       start: '10:00',
       end: '11:00',
     },
+    noon: {
+      beginPos: 'noon',
+      endPos: 'noon',
+      start: '11:01',
+      end: '16:59',
+    },
     sunset: {
+      beginPos: 'noon',
+      endPos: 'sunset',
       start: '17:00',
       end: '18:00',
     },
     moonrise: {
+      beginPos: 'sunset',
+      endPos: 'moon',
+      start: '18:00',
+      end: '20:00',
+    },
+    moon: {
+      beginPos: 'moon',
+      endPos: 'moon',
       start: '18:00',
       end: '20:00',
     },
     moonset: {
+      beginPos: 'moon',
+      endPos: 'sunrise',
       start: '00:00',
       end: '01:00',
     },
