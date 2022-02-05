@@ -2,3 +2,7 @@
 
 /dist/*.tar.gz
 /dist/*.js
+
+config.json
+config.old.json
+inputs.json
