@@ -5,11 +5,8 @@ import StepperMotor from './class/StepperMotor';
 import buildConfig from './commands/build-config/build-config';
 import log from './utils/log';
 import { readConfigFile } from './utils/utils';
-
-const { resolve } = require('path');
-
 const { Command, InvalidArgumentError } = require('commander');
-const program = new Command();
+const { resolve } = require('path');
 
 let command = '';
 let argv = {};
@@ -34,6 +31,7 @@ const validPositions = [
   'moon',
   'moonset',
 ];
+
 function isValidPositionType(value) {
   if (!validPositions.includes(value)) {
     log.error(`Invalid position: ${value}`);
@@ -44,10 +42,11 @@ function isValidPositionType(value) {
   return value;
 }
 
+const program = new Command();
 program.name(pkg.name).description(pkg.description).version(pkg.version);
 
 program
-  .command('exec-phase')
+  .command('phase')
   .description(
     `Begin a movement phase. Phase must be one of [${validPositions}].`
   )
@@ -114,7 +113,7 @@ let config = {};
 
 switch (command) {
   case 'move':
-  case 'exec-phase':
+  case 'phase':
     // case 'calibrate':
     const { configPath, execPython } = argv;
 
@@ -155,23 +154,18 @@ switch (command) {
     log.title('Starting Positional Move');
     steppers.forEach((stepperMotor) => {
       try {
-        stepperMotor.move(argv.from, argv.to, config.gearDriver.minDelay);
+        stepperMotor.move(argv.from, argv.to);
       } catch (error) {
         log.error(`Failed to move ${stepperMotor.motorId}:\n     ${error}`);
       }
     });
     break;
-  case 'exec-phase':
+  case 'phase':
     log.title('Starting Phase Move');
     const phase = config.phases[argv.phase];
     steppers.forEach((stepperMotor) => {
-      const phaseDist = Math.abs(
-        stepperMotor.coords[phase.endPos] - stepperMotor.coords[phase.beginPos]
-      );
-      const steps = stepperMotor.stepsPerMm * phaseDist;
-      const stepperDelay_ms = phase.total_ms / steps;
       try {
-        stepperMotor.move(phase.beginPos, phase.endPos, stepperDelay_ms);
+        stepperMotor.move(phase.beginPos, phase.endPos, phase.total_ms);
       } catch (error) {
         log.error(`Failed to move ${stepperMotor.motorId}:\n     ${error}`);
       }

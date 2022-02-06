@@ -48,7 +48,8 @@ const createPhasesObj = (phases) => {
 };
 
 const createMotorsArray = (config) => {
-  const { totalLength_mm, stepsPerMm, gpioPins } = config.gearDriver;
+  const { totalLength_mm, stepsPerMm, gpioPins, microsteps, minDelay } =
+    config.gearDriver;
   const { count, width_mm, gap_mm } = config.lightSpecs;
 
   const spacing_mm = roundFloat(totalLength_mm / (count + 1));
@@ -78,6 +79,8 @@ const createMotorsArray = (config) => {
         moonset: lightCoords.left,
       },
       stepsPerMm: stepsPerMm[i - 1],
+      microsteps,
+      minDelay,
     };
 
     motor.gpioPins = {

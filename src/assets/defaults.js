@@ -1,7 +1,7 @@
 export default {
   gearDriver: {
     totalLength_mm: 1820,
-    stepsPerMm: [160, 160, 160, 160], // 5 steps/mm * 32 microsteps
+    stepsPerMm: [163.5, 160, 160, 160], // 5 steps/mm * 32 microsteps
     microsteps: 32,
     minDelay: 0.00625, // 1/160 ms
     gpioPins: {

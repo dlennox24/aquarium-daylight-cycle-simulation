@@ -16,17 +16,26 @@ class StepperMotor {
     this.execPython = execPython;
   }
 
-  move(from, to, stepperDelay_ms) {
+  move(from, to, total_ms = 0) {
     log.text(`move: ${from} → ${to}`, { tag: this.id });
     const pyConfig = {
       ...this,
-      stepperDelay_ms,
+      total_ms,
       dist_mm: this.coords[to] - this.coords[from],
     };
     pyConfig.steps = roundInt(this.stepsPerMm * pyConfig.dist_mm);
+    pyConfig.stepperDelay_ms = total_ms / pyConfig.steps;
     pyConfig.pins = Object.keys(this.gpioPins).map(
       (pinKey) => this.gpioPins[pinKey]
     );
+
+    if (pyConfig.stepperDelay_ms < this.minDelay) {
+      log.warn(
+        `Calculated stepper motor delay (${pyConfig.stepperDelay_ms}ms) is less than minimum delay (${this.minDelay}ms). Setting delay to miniums.`,
+        { tag: this.id }
+      );
+      pyConfig.stepperDelay_ms = this.minDelay;
+    }
     delete pyConfig.pythonProcess;
 
     log.text(
