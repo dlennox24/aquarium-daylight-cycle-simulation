@@ -85,11 +85,15 @@ program
   .description(
     'Initial calibration of light positioning and stepper motor steps per millimeter.'
   )
+  .argument(
+    '<closestSwitch>',
+    'Which direction is the nearest calibration switch? (east/west)'
+  )
   .option(...optionTypes.configPath)
   .option(...optionTypes.noExecPython)
-  .action((options, program) => {
+  .action((dir, options, program) => {
     command = program.name();
-    argv = options;
+    argv = { dir, ...options };
   });
 
 program
@@ -114,7 +118,7 @@ let config = {};
 switch (command) {
   case 'move':
   case 'phase':
-    // case 'calibrate':
+  case 'calibrate':
     const { configPath, execPython } = argv;
 
     log.title(`Reading Config File`);
@@ -126,7 +130,12 @@ switch (command) {
         const motor = config.motors[motorId];
 
         log.text(`creating ${motorId}`, { tag: motorId });
-        const stepperMotor = new StepperMotor(motor, execPython);
+        const stepperMotor = new StepperMotor(
+          motor,
+          execPython,
+          configPath,
+          config
+        );
         log.success(`created motor!`, { tag: motorId });
 
         return stepperMotor;
@@ -156,7 +165,7 @@ switch (command) {
       try {
         stepperMotor.move(argv.from, argv.to);
       } catch (error) {
-        log.error(`Failed to move ${stepperMotor.motorId}:\n     ${error}`);
+        log.error(`Failed to move ${stepperMotor.id}:\n     ${error}`);
       }
     });
     break;
@@ -167,12 +176,25 @@ switch (command) {
       try {
         stepperMotor.move(phase.beginPos, phase.endPos, phase.total_ms);
       } catch (error) {
-        log.error(`Failed to move ${stepperMotor.motorId}:\n     ${error}`);
+        log.error(`Failed to move ${stepperMotor.id}:\n     ${error}`);
       }
     });
     break;
   case 'calibrate':
-    log.error('Not implemented yet');
+    log.title('Calibration');
+    steppers.forEach((stepperMotor) => {
+      try {
+        stepperMotor.calibrate(
+          argv.dir,
+          config.gearDriver.calibrationLength_mm,
+          config.gearDriver.calibrationSwitch0Pos
+        );
+      } catch (error) {
+        log.error(
+          `Failed to begin calibration ${stepperMotor.id}:\n     ${error}`
+        );
+      }
+    });
     break;
 
   default:

@@ -1,13 +1,16 @@
 export default {
   gearDriver: {
     totalLength_mm: 1820,
+    calibrationLength_mm: 195,
+    calibrationSwitch0Pos: 150,
     stepsPerMm: [163.5, 160, 160, 160], // 5 steps/mm * 32 microsteps
     microsteps: 32,
     minDelay: 0.00625, // 1/160 ms
     gpioPins: {
       motors: [1, 2, 3, 4],
       switches: [5, 6, 7, 8],
-      calibration: 12,
+      calibration0: 3,
+      calibration1: 4,
       direction: 9,
       sleep: 10,
       enable: 11,
