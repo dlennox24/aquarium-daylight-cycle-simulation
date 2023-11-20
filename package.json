@@ -12,10 +12,11 @@
     "tar": "tar --exclude='dist.tar.gz' -czvf ./dist/dist.tar.gz ./dist/* ./inputs.json ./package.json ./package-lock.json",
     "tar-src": "tar --exclude='dist.tar.gz' --exclude='src.tar.gz' --exclude='node_modules' -czvf ./src.tar.gz ./*",
     "untar": "tar -xzvf dist.tar.gz",
-    "scp": "scp ./dist/dist.tar.gz root@192.168.2.99:~/dev/aquarium-daylight-cycle-simulation/dist.tar.gz",
+    "scp": "scp ./dist/dist.tar.gz root@192.168.2.99:~/dev/adcs/dist.tar.gz",
     "ssh": "ssh root@192.168.2.99",
     "predeploy": "npm run build && npm run tar",
-    "deploy": "npm run scp"
+    "deploy": "npm run scp",
+    "post-deploy": "npm run untar && npm i"
   },
   "author": "dlennox24",
   "license": "MIT",
@@ -32,7 +33,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
-    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-transform-class-properties": "^7.23.3",
     "@babel/preset-env": "^7.12.11",
     "@rollup/plugin-babel": "^5.2.2",
     "rollup": "^2.35.1"
