@@ -108,9 +108,12 @@ const readInputs = (inputsPath) => {
 const exportConfig = (data, path) => {
   try {
     if (!fs.existsSync(path)) {
-      fs.createWriteStream(path);
+      const fileStream = fs.createWriteStream(path);
+      fileStream.write(JSON.stringify(data));
+      fileStream.end();
+    } else {
+      fs.writeFileSync(path, JSON.stringify(data));
     }
-    fs.writeFileSync(path, JSON.stringify(data));
   } catch (err) {
     log.error(err);
   }

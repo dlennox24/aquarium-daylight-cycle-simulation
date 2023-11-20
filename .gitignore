@@ -6,3 +6,5 @@
 config.json
 config.old.json
 inputs.json
+
+*.DS_Store
