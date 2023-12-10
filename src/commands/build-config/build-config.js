@@ -5,6 +5,9 @@ import log from '../../utils/log';
 import { roundFloat, timeDiff_ms } from '../../utils/utils';
 const { resolve } = require('path');
 
+// testing signed commits via gh-desktop
+//
+
 const createPhasesObj = (phases) => {
   // const { sunrise, sunset, moonrise, moonset } = phases;
   Object.keys(phases).forEach((phase) => {
